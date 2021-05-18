@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>My first three.js app</title>
+		<style>
+			body { margin: 0; }
+		</style>
+	</head>
+	<body style="background-color: #000;">
+		<header style="text-align: center ; font-size: 36px; color: #fff" >Three.js Experiment</header>
+		<!--Scripts-->
+		<script src="js/three.js"></script>
+		<script src="js/OrbitControls.js"></script>
+		<script src="js/ObjectLoader.js"></script>
+
+		<script>
+
+			//Create scene
+
+			const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+            const renderer = new THREE.WebGLRenderer();
+            renderer.setSize( window.innerWidth, window.innerHeight );
+            document.body.appendChild( renderer.domElement );
+
+			window.addEventListener('resize', function(){
+				var width = window.innerWidth;
+				var height = window.innerHeight;
+				renderer.setSize(width, height);
+				camera.aspect = width/height;
+				camera.updateProjectionMatrix();
+			});
+
+			//Controls
+
+			controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+			//ObjectLoader
+
+			var loader = new THREE.ObjectLoader();
+
+			loader.load(
+				"models/skull.json",
+
+				function(obj){
+					scene.add(obj);
+				}
+			);
+
+			//Adding cube
+
+            const geometry = new THREE.BoxGeometry();
+			var cubeMaterials = 
+			[
+				new THREE.MeshLambertMaterial({color: 0xFF0000, side: THREE.Doubleside}),
+				new THREE.MeshLambertMaterial({color: 0xFF0000, side: THREE.Doubleside}),
+				new THREE.MeshLambertMaterial({color: 0xFFFF00, side: THREE.Doubleside}),
+				new THREE.MeshLambertMaterial({color: 0xFFFF00, side: THREE.Doubleside}),
+				new THREE.MeshLambertMaterial({color: 0x00FF00, side: THREE.Doubleside}),
+				new THREE.MeshLambertMaterial({color: 0x00FF00, side: THREE.Doubleside})
+			];
+            const material = new THREE.MeshFaceMaterial(cubeMaterials);
+            const cube = new THREE.Mesh( geometry, material );
+            scene.add(cube);
+
+            camera.position.z = 4;
+			camera.position.x = 0;
+			camera.position.y = 0;
+
+			//Adding Player
+
+			class ThirdPersonCamera{
+				constructor(params){
+					this._params = params;
+					this._camera = params.camera;
+
+					this._currentPosition = new THREE.Vector3();
+					this._currentLookat = new THREE.Vector3();
+				}
+
+				_CalculateIdealOffset(){
+					const idealOffset = new THREE.Vector3(-15, 20, -30);
+					idealOffset.applyQuaternion(this._params.target.Rotation);
+					idealOffset.add(this._params.target.Position);
+					return idealOffset;
+				}
+
+				_CalculateIdealLookat(){
+					const idealLookat = new THREE.Vector3(0, 10, 50);
+					idealLookat.applyQuaternion(this._params.target.Rotation);
+					idealLookat.add(this._params.target.Position);
+					return idealLookat;
+				}
+
+				Update(timeElapsed){
+					const idealOffset = this._CalculateIdealOffset();
+					const idealLookat = this._CalculateIdealLookat();
+
+					const t = 0.05;
+
+					this._currentPosition.lerp(idealOffset, t);
+					this._currentLookat.lerp(idealLookat, t);
+
+					this._camera.position.copy(this._currentPosition);
+					this._camera.lookAt(this._currentLookat);
+				}
+			}
+
+
+            //Lighting
+			var ambientLight = new THREE.AmbientLight(0xFFFFFF, 10.0);
+			scene.add(ambientLight);
+
+			var light1 = new THREE.PointLight(0xFF0000, 4, 50);
+			scene.add(light1);
+
+			var light2 = new THREE.PointLight(0x00FF00, 3, 25);
+			scene.add(light2);
+
+			var light3 = new THREE.PointLight(0x80FF80, 2, 10);
+			scene.add(light3);
+
+			var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+			directionalLight.position.set(0, 1, 0);
+			scene.add(directionalLight);
+
+			var spotLight = new THREE.SpotLight(0xFFFFFF, 7);
+			spotLight.position.set(4, 0, 0);
+			scene.add(spotLight);
+
+            //Logic
+            function animate() {
+	        requestAnimationFrame( animate );
+	        renderer.render( scene, camera );
+
+			cube.rotation.x += 0.01;
+			cube.rotation.y += 0.005;
+
+			var time = Date.now() * 0.0005;
+
+			light1.position.x = Math.sin(time * 0.7)*30;
+			light1.position.y = Math.cos(time * 0.5)*40;
+			light1.position.z = Math.cos(time * 0.3)*30;
+
+			light2.position.x = Math.cos(time * 0.3)*30;
+			light2.position.y = Math.sin(time * 0.5)*40;
+			light2.position.z = Math.sin(time * 0.7)*30;
+
+			light3.position.x = Math.sin(time * 0.7)*30;
+			light3.position.y = Math.cos(time * 0.3)*40;
+			light3.position.z = Math.sin(time * 0.5)*30;
+
+            };
+
+			//Excecute!
+            animate();
+
+		</script>
+	</body>
+</html>
